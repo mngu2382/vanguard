@@ -1,0 +1,8 @@
+# editor tmps
+*.swp
+*~
+
+# python stuff
+__pycache__/
+*.pyc
+

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+
+<meta charset="utf-8">
+<link href="main.css" rel="stylesheet">
+<style>
+.axis path,
+.axis line {
+  fill: none;
+  shape-rendering: crispEdges;
+  stroke: #000;
+}
+
+.axis .tick {
+  font-size: 90%;
+}
+
+.axis text {
+  font-size: 80%;
+  font-style: bold;
+}
+
+.dot {
+  fill: white;
+  opacity: 1e-6;
+  stroke: darkorange;
+  stroke-width: 3px;
+}
+
+.dot:hover {
+  opacity: 1;
+}
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+
+div.tooltip {
+  background: #ddd;
+  border: solid 1px #aaa;
+  border-radius: 8px;
+  font-size: 80%;
+  height: 28px;
+  padding: 4px;
+  pointer-events: none;
+  position: absolute;
+  text-align: center;
+  width: 60px;
+}
+    
+#fund-names {
+  margin-top: 10px;
+  margin-left: 8px;
+}
+</style>
+
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+
+<select id="fund-names">
+</select>
+
+<script>
+var margin = {top: 20, right: 10, bottom: 30, left: 40},
+    width = 600 - margin.left - margin.right,
+    height = 300 - margin.top - margin.bottom;
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var x = d3.time.scale()
+    .range([0, width]);
+
+var y = d3.scale.linear()
+    .range([height, 0]);
+
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom");
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left");
+
+svg.append("g")
+    .attr("class", "x axis")
+    .attr("transform", "translate(0," + height + ")");
+
+svg.append("g")
+    .attr("class", "y axis")
+  .append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("y", "1em")
+    .style("text-anchor", "end")
+    .style("font-weight", "bold")
+    .text("Net Asset Value ($)");
+
+function line(fund) {
+    return d3.svg.line()
+        .defined(function(d) { return d[fund] != null; })
+        .x(function(d) { return x(d.Date); })
+        .y(function(d) { return y(d[fund]); });
+};
+
+var formatTime = d3.time.format("%Y-%m-%d");
+
+// conversions for csv
+function type(d) {
+  for (var k in d)
+    if (k=="Date")
+      d[k] = formatTime.parse(d[k]);
+    else
+      d[k] = d[k]=="NA" ? null : +d[k];
+  return d;
+};
+
+var funds = {
+    "fund01" : "Index Australian Shares Fund",
+    "fund02" : "LifeStrategy\xAE Conservative Fund",
+    "fund03" : "Investor Cash Plus Fund",
+    "fund04" : "Index Diversified Bond Fund",
+    "fund05" : "LifeStrategy\xAE Growth Fund",
+    "fund06" : "LifeStrategy\xAE High Growth Fund",
+    "fund07" : "Index Hedged International Shares Fund",
+    "fund08" : "Index International Shares Fund",
+    "fund09" : "Index Australian Property Securities Fund",
+    "fund29" : "High Yield Australian Shares Fund",
+    "fund28" : "LifeStrategy\xAE Balanced Fund"
+};
+
+function change(data, value) {
+  redraw(data, value);
+}
+
+var path = svg.append("path")
+  .attr("class", "line");
+var dots = svg.selectAll(".dot")
+
+d3.csv("NAV.csv", type, function(error, data) {
+  // dropdown menu
+  d3.select("#fund-names")
+      .on("change", function() { change(data, this.value); })
+    .selectAll("options")
+      .data(d3.keys(funds))
+    .enter().append("option")
+      .attr("value", function(d) { return d; })
+      .text(function(d) { return funds[d]; });
+
+  path.datum(data);
+  dots.data(data)
+    .enter().append("circle")
+      .attr("class", "dot")
+      .attr("r", "4px");
+  
+  // default fund
+  redraw(data, "fund01");
+});
+
+function redraw(data, fund) {
+    // map data range to figure domain
+    x.domain(d3.extent(data, function(d) { return d.Date; }));
+    y.domain(d3.extent(data, function(d) { return d[fund]; }));
+
+    // x axis
+    svg.select(".x.axis")
+        .call(xAxis);
+
+    // y axis
+    svg.select(".y.axis")
+        .call(yAxis);
+
+    // line
+    path.attr("d", line(fund));
+
+    // tooltip dots
+    d3.selectAll("circle")
+        .attr("cx", function(d) { return x(d.Date); })
+        .attr("cy", function(d) { return y(d[fund]); })
+        .on("mouseover", mouseover)
+        .on("mousemove", function(d) { mousemove(d, fund); })
+        .on("mouseout", mouseout);
+};
+
+// tooltip div and transition functions
+var div = d3.select("body").append("div")	
+    .attr("class", "tooltip")				
+    .style("opacity", 1e-6);
+
+function mouseover() {
+  div.transition()
+      .duration(200)
+      .style("opacity", 1);
+}
+
+function mousemove(d, fund) {
+  div
+      .text(formatTime(d.Date) + "\n" + d3.format("$.3f")(d[fund]))
+      .style("left", (d3.event.pageX + 15) + "px")
+      .style("top", (d3.event.pageY + 15) + "px");
+}
+
+function mouseout() {
+  div.transition()
+      .duration(300)
+      .style("opacity", 1e-6);
+}
+</script>

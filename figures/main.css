@@ -1,0 +1,168 @@
+body {
+  color: #000;
+  font-family: "Droid Serif",Verdana,Geneva,serif;
+  font-size: 11pt;
+  max-width: 660px;
+  min-width: 300px;
+  margin: 0 12px 0 30px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0.6em 0;
+}
+
+    h1 { font-size: 2em; }
+    h2 { font-size: 1.4em; }
+    h3 { font-size: 1.2em; }
+    h4 { font-size: 1.05em; }
+
+nav, footer {
+  margin-bottom: 30px;
+}
+
+section, aside {
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 14px;
+  padding: 0 12px 15px;
+}
+
+    header {
+      margin-bottom: 0;
+      margin-top: 15px;
+      padding: 0;
+    }
+        
+        #banner {
+          whitespace: nowrap;
+        }
+
+        #banner h1, #banner h2 {
+          display: inline-block;
+          margin: 0;
+        }
+        
+            #banner h1 {
+              font-size: 36px;
+            }
+            
+            #banner h2 {
+              font-size: 24px;
+            }
+
+        #banner a:link, #banner a:visited {
+	  color: #111;
+	  text-decoration: none;
+        }
+
+        #banner a:hover, #banner a:active {
+	  color: #d32;
+        }
+
+    nav {
+      background: #111;
+      color: #fff;
+    }
+
+        nav ul {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+        }
+
+        nav li {
+          display: inline;
+          font-size: 1.2em;
+        }
+        
+        nav a {
+          display: inline-block;
+          padding: 5px 12px;
+        }
+
+            nav a:link, nav a:visited {
+	      color: #fff;
+	      text-decoration: none;
+            }
+            
+            nav a:hover, nav a:active {
+	      background: #d32;
+	      color: #fff;
+            }
+
+    section {
+      overflow: hidden;
+    }
+    
+    aside {}
+    
+    footer {
+      color: #333;
+      font-size: 90%;
+      text-align: right
+    }
+
+a {
+   text-decoration: none;
+}
+
+    a:hover, a:active {
+      text-decoration: underline;
+    }
+
+code, pre  {
+  font-family: Inconsolata,Menlo,Monaco,Consolas,"Courier New",monospace;
+}
+
+    code {
+      white-space: nowrap;
+    }
+    
+    pre {
+      background-color: #f4f4f4;
+      display: block;
+      padding: 5px 10px;
+      overflow: auto;
+    }
+    
+    pre code {
+      font-size: 95%;
+      white-space: pre;
+    }
+
+blockquote {
+  color: #333;
+  font-size: 90%;
+  font-style: italic;   
+}
+
+.footnotes {
+  font-size: 90%;
+}
+
+    .footnotes ol {
+      padding-left: 1.5em;
+    }
+
+img {
+  display: block;
+  height: auto;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 100%;
+  width: auto;
+}
+    /* Used for image captions */
+    p.caption {
+      font-size: 90%;
+      margin-top: 0;
+    }
+
+table {
+  font-size: 90%;
+  border-collapse: collapse;
+}
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 3px 5px;
+    }

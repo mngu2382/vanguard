@@ -1,0 +1,13 @@
+funds = {
+    "1" : "vanguard&reg; index australian shares fund",
+    "2" : "vanguard&reg; lifestrategy&reg; conservative fund",
+    "3" : "vanguard&reg; investor cash plus fund",
+    "4" : "vanguard&reg; index diversified bond fund",
+    "5" : "vanguard&reg; lifestrategy&reg; growth fund",
+    "6" : "vanguard&reg; lifestrategy&reg; high growth fund",
+    "7" : "vanguard&reg; index hedged international shares fund",
+    "8" : "vanguard&reg; index international shares fund",
+    "9" : "vanguard&reg; index australian property securities fund",
+    "29" : "vanguard&reg; high yield australian shares fund",
+    "28" : "vanguard&reg; lifestrategy&reg; balanced fund"
+}
