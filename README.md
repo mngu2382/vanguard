@@ -9,7 +9,7 @@ and check `http://localhost:8000` in your favourite web browser.
 A dictionary of fundID and corresponding fund name
 
 ## ./getVanguardPrices.py
-Defines a function with retrieves a funds price history from 
+Defines a function which retrieves a fund's price history from 
 https://www.vanguardinvestments.com.au/retail/ret/investments/price-history-rtl.jsp
 
     getVanguardPrices(fundId, startDate, endDate)
@@ -17,9 +17,9 @@ https://www.vanguardinvestments.com.au/retail/ret/investments/price-history-rtl.
 ## ./VanguardPrices.py
 A command-line utility for ./getVanguardPrices
 
-    ./VanguarPrices.py --help
+    ./VanguardPrices.py --help
 
-## ./updateVanguardePrices.py
+## ./updateVanguardPrices.py
 A script to update prices in ./fundData
 
 ## ./mergeNAV.py
