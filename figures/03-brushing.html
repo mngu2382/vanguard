@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<!-- Adapted from http://bl.ocks.org/mbostock/1667367 -->
+<meta charset="utf-8">
+<link href="main.css" rel="stylesheet">
+<style>
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.axis .tick {
+  font-size: 80%;
+}
+
+.axis text {
+  font-size: 80%;
+  font-style: bold;
+}
+
+.line, .area {
+  stroke: steelblue;
+  stroke-width: 1.5px;
+  clip-path: url(#clip);
+}
+
+.line {
+  fill: none;
+}
+
+.area {
+  fill: steelblue;
+}
+
+.brush .extent {
+  stroke: #fff;
+  fill-opacity: .125;
+  shape-rendering: crispEdges;
+}
+
+.dot {
+  fill: white;
+  opacity: 1e-6;
+  stroke: darkorange;
+  stroke-width: 3px;
+}
+
+.dot:hover {
+  opacity: 1;
+}
+
+div.tooltip {
+  background: #ddd;
+  border: solid 1px #aaa;
+  border-radius: 8px;
+  font-size: 80%;
+  height: 28px;
+  padding: 4px;
+  pointer-events: none;
+  position: absolute;
+  text-align: center;
+  width: 60px;
+}
+
+</style>
+<body>
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script src="d3.min.js"></script>
+<script>
+
+var fund = "fund08";
+
+var margin = {top: 40, right: 10, bottom: 130, left: 40},
+    margin2 = {top:300, right: 10, bottom: 20, left: 40},
+    width = 600 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom,
+    height2 = 400 - margin2.top - margin2.bottom;
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    
+svg.append("defs").append("clipPath")
+    .attr("id", "clip")
+  .append("rect")
+    .attr("width", width)
+    .attr("height", height);
+
+var x = d3.time.scale().range([0, width]),
+    x2 = d3.time.scale().range([0, width]),
+    y = d3.scale.linear().range([height, 0]),
+    y2 = d3.scale.linear().range([height2, 0]);
+
+var xAxis = d3.svg.axis().scale(x).orient("bottom"),
+    xAxis2 = d3.svg.axis().scale(x2).orient("bottom"),
+    yAxis = d3.svg.axis().scale(y).orient("left");
+
+var focus = svg.append("g")
+    .attr("class", "focus")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var context = svg.append("g")
+    .attr("class", "context")
+    .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
+
+focus.append("g")
+  .append("text")
+    .attr("y", "-0.5em")
+    .attr("x", width/2)
+    .style("font-weight", "bold")
+    .style("text-anchor", "middle")
+    .text("Vanguard\xAE Index International Shares Fund");
+
+// focus line
+var line = d3.svg.line()
+    .interpolate("linear")
+    .defined(function(d) { return d[fund] != null; })
+    .x(function(d) { return x(d.Date); })
+    .y(function(d) { return y(d[fund]); });
+
+// context area
+var area = d3.svg.area()
+    .interpolate("linear")
+    .defined(function(d) { return d[fund] != null; })
+    .x(function(d) { return x2(d.Date); })
+    .y0(height2)
+    .y1(function(d) { return y2(d[fund]); });
+
+// tooltip div
+var div = d3.select("body").append("div")	
+    .attr("class", "tooltip")				
+    .style("opacity", 1e-6);
+
+// tooltip transition functions
+function mouseover() {
+  div.transition()
+      .duration(200)
+      .style("opacity", 1);
+}
+
+function mousemove(d, fund) {
+  div
+      .text(formatTime(d.Date) + "\n" + d3.format("$.3f")(d[fund]))
+      .style("left", (d3.event.pageX + 15) + "px")
+      .style("top", (d3.event.pageY + 15) + "px");
+}
+
+function mouseout() {
+  div.transition()
+      .duration(300)
+      .style("opacity", 1e-6);
+}
+
+// conversions for csv
+var formatTime = d3.time.format("%Y-%m-%d");
+function type(d) {
+  for (var k in d)
+    if (k=="Date")
+      d[k] = formatTime.parse(d[k]);
+    else
+      d[k] = d[k]=="NA" ? null : +d[k];
+  return d;
+};
+
+d3.csv("NAV.csv", type, function(error, data) {
+  // map data range to figure domain
+  x.domain(d3.extent(data, function(d) { return d.Date; }));
+  y.domain(d3.extent(data, function(d) { return d[fund]; }));
+  x2.domain(x.domain());
+  y2.domain(y.domain());
+
+  var brush = d3.svg.brush()
+      .x(x2)
+      .on("brush", brushed);
+
+  function brushed() {
+    // redraw x-axis
+    x.domain(brush.empty() ? x2.domain() : brush.extent());
+    focus.select(".x.axis").call(xAxis);
+    // redraw y-axis (must be a better way)
+    var dataFiltered = data.filter(function(d, i) {
+      if ( (d.Date >= x.domain()[0]) && (d.Date <= x.domain()[1]) ) {
+        return d[fund];
+      }
+    })
+    y.domain([d3.min(dataFiltered.map(function(d) { return d[fund]; })),
+              d3.max(dataFiltered.map(function(d) { return d[fund]; }))]);
+    focus.select(".y.axis").call(yAxis);
+    // re-draw line
+    focus.select(".line").attr("d", line);
+    // re-draw dots and tooltips
+    var dots = focus.selectAll(".dots")
+        .data(dataFiltered)
+      .enter().append("circle")
+        .attr("class", "dot")
+        .attr("r", "4px");
+    d3.selectAll("circle")
+      .attr("cx", function(d) { return x(d.Date); })
+      .attr("cy", function(d) { return y(d[fund]); })
+      .on("mouseover", mouseover)
+      .on("mousemove", function(d) { mousemove(d, fund); })
+      .on("mouseout", mouseout);
+  }
+
+  var path = focus.append("path")
+      .datum(data)
+      .attr("class", "line")
+      .attr("d", line);
+
+  var dots = focus.selectAll(".dots")
+      .data(data)
+    .enter().append("circle")
+      .attr("class", "dot")
+      .attr("r", "4px");
+
+  focus.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+  focus.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", "1em")
+      .style("text-anchor", "end")
+      .style("font-weight", "bold")
+      .text("Net Asset Value ($)");
+
+  context.append("path")
+      .datum(data)
+      .attr("class", "area")
+      .attr("d", area);
+
+  context.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height2 + ")")
+      .call(xAxis2);
+
+  context.append("g")
+      .attr("class", "x brush")
+      .call(brush)
+    .selectAll("rect")
+      .attr("y", -6)
+      .attr("height", height2 + 7);
+
+  // tooltip dots
+  d3.selectAll("circle")
+      .attr("cx", function(d) { return x(d.Date); })
+      .attr("cy", function(d) { return y(d[fund]); })
+      .on("mouseover", mouseover)
+      .on("mousemove", function(d) { mousemove(d, fund); })
+      .on("mouseout", mouseout);
+
+});
+
+</script>
+
