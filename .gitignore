@@ -5,3 +5,6 @@
 # python stuff
 __pycache__/
 *.pyc
+
+scrap.html
+d3.min.js
