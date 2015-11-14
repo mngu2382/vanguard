@@ -15,7 +15,7 @@
 }
 
 .axis text {
-  font-size: 90%;
+  font-size: 80%;
   font-style: bold;
 }
 
@@ -28,6 +28,7 @@
 
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="d3.min.js"></script>
 <script>
 var margin = {top: 40, right: 10, bottom: 30, left: 40},
     width = 600 - margin.left - margin.right,
@@ -39,24 +40,16 @@ var svg = d3.select("body").append("svg")
   .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-var x = d3.time.scale()
-    .range([0, width]);
-
-var y = d3.scale.linear()
-    .range([height, 0]);
-
-var xAxis = d3.svg.axis()
-    .scale(x)
-    .orient("bottom");
-
-var yAxis = d3.svg.axis()
-    .scale(y)
-    .orient("left");
+var x = d3.time.scale().range([0, width]),
+    y = d3.scale.linear().range([height, 0]),
+    xAxis = d3.svg.axis().scale(x).orient("bottom"),
+    yAxis = d3.svg.axis().scale(y).orient("left");
 
 var line = d3.svg.line()
     .defined(function(d) { return d.fund08 != null; })
     .x(function(d) { return x(d.Date); })
-    .y(function(d) { return y(d.fund08); });
+    .y(function(d) { return y(d.fund08); })
+    .interpolate("linear");
 
 // conversions for csv
 var parseDate = d3.time.format("%Y-%m-%d").parse;
@@ -67,40 +60,40 @@ function type(d) {
 }
 
 d3.csv("NAV.csv", type, function(error, data) {
-    // map data range to figure domain
-    x.domain(d3.extent(data, function(d) { return d.Date; }));
-    y.domain(d3.extent(data, function(d) { return d.fund08; }));
+   // map data range to figure domain
+   x.domain(d3.extent(data, function(d) { return d.Date; }));
+   y.domain(d3.extent(data, function(d) { return d.fund08; }));
 
-    // figure title
-    svg.append("g")
-      .append("text")
-        .attr("y", "-0.5em")
-        .attr("x", width/2)
-        .style("font-weight", "bold")
-        .style("text-anchor", "middle")
-        .text("Vanguard\xAE Index International Shares Fund");
+   // figure title
+   svg.append("g")
+     .append("text")
+       .attr("y", "-0.5em")
+       .attr("x", width/2)
+       .style("font-weight", "bold")
+       .style("text-anchor", "middle")
+       .text("Vanguard\xAE Index International Shares Fund");
 
-    // x axis
-    svg.append("g")
-        .attr("class", "x axis")
-        .attr("transform", "translate(0," + height + ")")
-        .call(xAxis);
+   // x axis
+   svg.append("g")
+       .attr("class", "x axis")
+       .attr("transform", "translate(0," + height + ")")
+       .call(xAxis);
 
-    // y axis with axis title
-    svg.append("g")
-        .attr("class", "y axis")
-        .call(yAxis)
-      .append("text")
-        .attr("transform", "rotate(-90)")
-        .attr("y", "1em")
-        .style("text-anchor", "end")
-        .style("font-weight", "bold")
-        .text("Net Asset Value ($)");
+   // y axis with axis title
+   svg.append("g")
+       .attr("class", "y axis")
+       .call(yAxis)
+     .append("text")
+       .attr("transform", "rotate(-90)")
+       .attr("y", "1em")
+       .style("text-anchor", "end")
+       .style("font-weight", "bold")
+       .text("Net Asset Value ($)");
 
-    // line
-    svg.append("path")
-        .datum(data)
-        .attr("class", "line")
-        .attr("d", line);
+   // line
+   svg.append("path")
+       .datum(data)
+       .attr("class", "line")
+       .attr("d", line);
 })
 </script>

@@ -11,12 +11,18 @@
 }
 
 .axis .tick {
-  font-size: 90%;
+  font-size: 80%;
 }
 
 .axis text {
   font-size: 80%;
   font-style: bold;
+}
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
 }
 
 .dot {
@@ -28,12 +34,6 @@
 
 .dot:hover {
   opacity: 1;
-}
-
-.line {
-  fill: none;
-  stroke: steelblue;
-  stroke-width: 1.5px;
 }
 
 div.tooltip {
@@ -48,7 +48,7 @@ div.tooltip {
   text-align: center;
   width: 60px;
 }
-    
+
 #fund-names {
   margin-top: 10px;
   margin-left: 8px;
@@ -57,12 +57,13 @@ div.tooltip {
 
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="d3.min.js"></script>
 
 <select id="fund-names">
 </select>
 
 <script>
-var margin = {top: 20, right: 10, bottom: 30, left: 40},
+var margin = {top: 40, right: 10, bottom: 30, left: 40},
     width = 600 - margin.left - margin.right,
     height = 300 - margin.top - margin.bottom;
 
@@ -72,19 +73,10 @@ var svg = d3.select("body").append("svg")
   .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-var x = d3.time.scale()
-    .range([0, width]);
-
-var y = d3.scale.linear()
-    .range([height, 0]);
-
-var xAxis = d3.svg.axis()
-    .scale(x)
-    .orient("bottom");
-
-var yAxis = d3.svg.axis()
-    .scale(y)
-    .orient("left");
+var x = d3.time.scale().range([0, width]),
+    y = d3.scale.linear().range([height, 0]),
+    xAxis = d3.svg.axis().scale(x).orient("bottom"),
+    yAxis = d3.svg.axis().scale(y).orient("left");
 
 svg.append("g")
     .attr("class", "x axis")
@@ -99,16 +91,13 @@ svg.append("g")
     .style("font-weight", "bold")
     .text("Net Asset Value ($)");
 
-function line(fund) {
-    return d3.svg.line()
-        .defined(function(d) { return d[fund] != null; })
-        .x(function(d) { return x(d.Date); })
-        .y(function(d) { return y(d[fund]); });
-};
-
-var formatTime = d3.time.format("%Y-%m-%d");
+// tooltip div and transition functions
+var div = d3.select("body").append("div")	
+    .attr("class", "tooltip")				
+    .style("opacity", 1e-6);
 
 // conversions for csv
+var formatTime = d3.time.format("%Y-%m-%d");
 function type(d) {
   for (var k in d)
     if (k=="Date")
@@ -132,18 +121,65 @@ var funds = {
     "fund28" : "LifeStrategy\xAE Balanced Fund"
 };
 
-function change(data, value) {
-  redraw(data, value);
-}
-
-var path = svg.append("path")
-  .attr("class", "line");
-var dots = svg.selectAll(".dot")
+var path = svg.append("path").attr("class", "line"),
+    dots = svg.selectAll(".dot");
 
 d3.csv("NAV.csv", type, function(error, data) {
+  function change(fund) {
+    redraw(fund);
+  }
+  
+  // tooltip transition functions
+  function mouseover() {
+    div.transition()
+        .duration(200)
+        .style("opacity", 1);
+  }
+  
+  function mousemove(d, fund) {
+    div
+        .text(formatTime(d.Date) + "\n" + d3.format("$.3f")(d[fund]))
+        .style("left", (d3.event.pageX + 15) + "px")
+        .style("top", (d3.event.pageY + 15) + "px");
+  }
+  
+  function mouseout() {
+    div.transition()
+        .duration(300)
+        .style("opacity", 1e-6);
+  }
+
+  var line = d3.svg.line().interpolate("linear");
+
+  function redraw(fund) {
+    line
+        .defined(function(d) { return d[fund] != null; })
+        .x(function(d) { return x(d.Date); })
+        .y(function(d) { return y(d[fund]); });
+
+    // map data range to figure domain
+    x.domain(d3.extent(data, function(d) { return d.Date; }));
+    y.domain(d3.extent(data, function(d) { return d[fund]; }));
+  
+    // axis
+    svg.select(".x.axis").call(xAxis);
+    svg.select(".y.axis").call(yAxis);
+  
+    // line
+    path.attr("d", line);
+  
+    // tooltip dots
+    d3.selectAll("circle")
+        .attr("cx", function(d) { return x(d.Date); })
+        .attr("cy", function(d) { return y(d[fund]); })
+        .on("mouseover", mouseover)
+        .on("mousemove", function(d) { mousemove(d, fund); })
+        .on("mouseout", mouseout);
+  };
+
   // dropdown menu
   d3.select("#fund-names")
-      .on("change", function() { change(data, this.value); })
+      .on("change", function() { change(this.value); })
     .selectAll("options")
       .data(d3.keys(funds))
     .enter().append("option")
@@ -157,55 +193,6 @@ d3.csv("NAV.csv", type, function(error, data) {
       .attr("r", "4px");
   
   // default fund
-  redraw(data, "fund01");
+  redraw("fund01");
 });
-
-function redraw(data, fund) {
-    // map data range to figure domain
-    x.domain(d3.extent(data, function(d) { return d.Date; }));
-    y.domain(d3.extent(data, function(d) { return d[fund]; }));
-
-    // x axis
-    svg.select(".x.axis")
-        .call(xAxis);
-
-    // y axis
-    svg.select(".y.axis")
-        .call(yAxis);
-
-    // line
-    path.attr("d", line(fund));
-
-    // tooltip dots
-    d3.selectAll("circle")
-        .attr("cx", function(d) { return x(d.Date); })
-        .attr("cy", function(d) { return y(d[fund]); })
-        .on("mouseover", mouseover)
-        .on("mousemove", function(d) { mousemove(d, fund); })
-        .on("mouseout", mouseout);
-};
-
-// tooltip div and transition functions
-var div = d3.select("body").append("div")	
-    .attr("class", "tooltip")				
-    .style("opacity", 1e-6);
-
-function mouseover() {
-  div.transition()
-      .duration(200)
-      .style("opacity", 1);
-}
-
-function mousemove(d, fund) {
-  div
-      .text(formatTime(d.Date) + "\n" + d3.format("$.3f")(d[fund]))
-      .style("left", (d3.event.pageX + 15) + "px")
-      .style("top", (d3.event.pageY + 15) + "px");
-}
-
-function mouseout() {
-  div.transition()
-      .duration(300)
-      .style("opacity", 1e-6);
-}
 </script>
